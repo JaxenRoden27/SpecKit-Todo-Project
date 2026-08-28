@@ -48,6 +48,15 @@ export const createUserWithLists = async ({
   return { user, password, lists: createdLists };
 };
 
+export const createTodo = async ({ user, list, title, completed = false }) => {
+  return db.todo.create({
+    title,
+    completed,
+    listId: list.id,
+    userId: user.id,
+  });
+};
+
 export const loginAs = async (username, password = "password123") => {
   const res = await request(app).post("/todo/login").send({ username, password });
   return res.body;

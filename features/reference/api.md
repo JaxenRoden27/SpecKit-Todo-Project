@@ -1,7 +1,7 @@
 # API Reference
 
 **Base path:** `/todo/`  
-**Status:** Integrated API through **Feature 2** (authentication, list CRUD).  
+**Status:** Integrated API through **Feature 3** (authentication, list CRUD, todo items).  
 **Authority for new work:** feature specs in `features/` — update this file in the same PR when routes or payloads change.
 
 **Auth:** Send `Authorization: Bearer <token>` on protected routes.  
@@ -13,6 +13,7 @@
 |------|---------|
 | Register, login, logout | 1 |
 | List CRUD (`GET/POST/PUT/DELETE /todo/lists`) | 2 |
+| Todo items (`GET/POST /todo/lists/:listId/todos`, `PUT/DELETE /todo/todos/:id`) | 3 |
 
 ---
 
@@ -99,3 +100,38 @@ Client-supplied `userId` on create is ignored; ownership is always `req.user.id`
 **Delete success:** `200` with `{ "message": "List deleted." }`.
 
 **List errors:** empty/whitespace name `400` with `"List name is required."`; name longer than 100 characters `400` with `"List name must be 100 characters or fewer."`; unowned or missing list `404` with `"List with id=<id> not found."`; missing token `401`.
+
+---
+
+## Todos (Feature 3)
+
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| `GET` | `/todo/lists/:listId/todos` | Yes | Todos in an owned list (incomplete first, then `createdAt` ASC) |
+| `POST` | `/todo/lists/:listId/todos` | Yes | Add a todo to an owned list |
+| `PUT` | `/todo/todos/:id` | Yes | Update title and/or `completed` |
+| `DELETE` | `/todo/todos/:id` | Yes | Delete a todo owned by the caller |
+
+**Create body:**
+```json
+{ "title": "Buy milk" }
+```
+
+Client-supplied `userId` / `listId` on create are ignored. New todos default `completed: false`. Parent list must be owned by the caller.
+
+**Todo success** (`200` / `201`):
+```json
+{
+  "id": 10,
+  "listId": 1,
+  "title": "Buy milk",
+  "completed": false,
+  "userId": 42,
+  "createdAt": "2026-07-02T12:05:00.000Z",
+  "updatedAt": "2026-07-02T12:05:00.000Z"
+}
+```
+
+**Delete success:** `200` with `{ "message": "Todo deleted." }`.
+
+**Todo errors:** empty/whitespace title `400` with `"Todo title is required."`; title longer than 255 characters `400`; unowned/missing parent list `404` with `"List with id=<id> not found."`; unowned/missing todo `404` with `"Todo with id=<id> not found."`; missing token `401`.

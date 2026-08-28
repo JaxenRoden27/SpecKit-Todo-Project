@@ -1,6 +1,6 @@
 # Data Model Reference
 
-**Status:** Integrated schema through **Feature 2** (`users`, `sessions`, `lists`).  
+**Status:** Integrated schema through **Feature 3** (`users`, `sessions`, `lists`, `todos`).  
 **Authority for new work:** feature specs in `features/` — update this file in the same PR when schema changes.  
 **Architecture:** [ADR-0003 — MySQL relational database](../../docs/adr/0003-mysql-relational-database.md)
 
@@ -10,6 +10,7 @@
 |----------------|------------|
 | `users`, `sessions` | Feature 1 |
 | `lists` | Feature 1 (table); Feature 2 (CRUD) |
+| `todos` | Feature 3 |
 
 ---
 
@@ -59,9 +60,27 @@ Feature 2 delivers list create, rename, and delete. Reads remain scoped to `user
 
 ---
 
+## `todos`
+
+| Column | Type | Rules |
+|--------|------|-------|
+| `id` | INTEGER PK | Auto-increment |
+| `listId` | INTEGER FK | Required → `lists.id`; cascade on list delete |
+| `title` | STRING(255) | Required; trimmed; max 255 characters |
+| `completed` | BOOLEAN | Default `false` |
+| `userId` | INTEGER FK | Required → `users.id`; set from `req.user.id` on create |
+| `createdAt` | DATE | Sequelize timestamps |
+| `updatedAt` | DATE | Sequelize timestamps |
+
+---
+
 ## Associations
 
 * `User hasMany Session` — `onDelete: CASCADE`
 * `Session belongsTo User`
 * `User hasMany List` — `onDelete: CASCADE`
 * `List belongsTo User`
+* `List hasMany Todo` — `onDelete: CASCADE`
+* `Todo belongsTo List`
+* `User hasMany Todo`
+* `Todo belongsTo User`

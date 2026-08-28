@@ -44,7 +44,9 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | `GET /todo/lists` returns only rows where `userId = req.user.id` | `list.controller` `findAll` | Feature 1 |
 | List create ownership comes from `req.user.id` only; client `userId` is ignored | `list.controller` `create` | Feature 2 |
 | List update/delete only when `id` and `userId = req.user.id`; otherwise `404` | `getAccessibleListOrNull` | Feature 2 |
-| Cross-user access → **`404`**, never `403` | List write helpers | ADR-0002; Feature 2 |
+| Todos: parent list must be owned; todo reads/writes scoped to caller; create ignores client `userId`/`listId` spoofing | `todo.controller` + helpers | Feature 3 |
+| Cross-user access → **`404`**, never `403` | List/todo helpers | ADR-0002; Features 2–3 |
+| Deleting a list cascades to its todos | Sequelize `List hasMany Todo` `onDelete: CASCADE` | Feature 3 |
 
 ## Lists
 
@@ -56,13 +58,25 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | Single-view lists UI (`Dashboard.vue`); list CRUD via dialogs; no sidebar/main split | Dashboard | Feature 2 |
 | Empty lists: **"No lists yet. Create your first list."** | Dashboard | Feature 2 |
 
+## Todos
+
+| Rule | Enforcement | Introduced |
+|------|-------------|------------|
+| Todo title trimmed; empty/whitespace rejected | Create/update API + dialogs | Feature 3 |
+| Todo title max **255** characters | API | Feature 3 |
+| New todos default `completed: false` | Create | Feature 3 |
+| Sort: **incomplete first**, then `createdAt` ascending | API `order` + client `sortTodos` | Feature 3 |
+| Items managed in list-items dialog (+ nested add/edit/delete); **+ Add Item** only inside that dialog | Dashboard | Feature 3 |
+| Empty items: **"No todos in this list yet."** | Items dialog | Feature 3 |
+| Completed todos show struck-through / muted title | Dashboard row styling | Feature 3 |
+
 ## UI
 
 | Rule | Enforcement | Introduced |
 |------|-------------|------------|
 | Login and register use a full-screen layout (no `MenuBar`) | `App.vue` | Feature 1 |
 | `MenuBar` shown on signed-in routes with the user's name and **Sign out** | `MenuBar.vue` | Feature 2 |
-| Auth and list errors shown in `<v-alert type="error">` | Login / Register / Dashboard | Features 1–2 |
+| Auth, list, and todo errors shown in `<v-alert type="error">` | Login / Register / Dashboard | Features 1–3 |
 
 ## Errors (product convention)
 

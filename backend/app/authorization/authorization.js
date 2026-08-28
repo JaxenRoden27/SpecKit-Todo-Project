@@ -1,7 +1,7 @@
 import db from "../models/index.js";
 import logger from "../config/logger.js";
 
-const { session: Session, user: User, list: List } = db;
+const { session: Session, user: User, list: List, todo: Todo } = db;
 
 export const authenticate = async (req, res, next) => {
   try {
@@ -31,5 +31,10 @@ export const authenticate = async (req, res, next) => {
 
 export const getAccessibleListOrNull = async (req, listId) => {
   const row = await List.findOne({ where: { id: listId, userId: req.user.id } });
+  return row ?? null;
+};
+
+export const getAccessibleTodoOrNull = async (req, todoId) => {
+  const row = await Todo.findOne({ where: { id: todoId, userId: req.user.id } });
   return row ?? null;
 };

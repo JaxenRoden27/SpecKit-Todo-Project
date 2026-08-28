@@ -1,11 +1,14 @@
 import { Router } from "express";
 import lists from "../controllers/list.controller.js";
+import todos from "../controllers/todo.controller.js";
 import { authenticate } from "../authorization/authorization.js";
 
 const router = Router();
 
 router.get("/", [authenticate], lists.findAll);
 router.post("/", [authenticate], lists.create);
+router.get("/:listId/todos", [authenticate], todos.findAll);
+router.post("/:listId/todos", [authenticate], todos.create);
 router.put("/:listId", [authenticate], lists.update);
 router.delete("/:listId", [authenticate], lists.delete);
 
