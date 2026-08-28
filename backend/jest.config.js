@@ -4,6 +4,7 @@ export default {
   transform: {},
   testMatch: ["**/tests/**/*.test.js"],
   setupFiles: ["./tests/setup.js"],
+  setupFilesAfterEnv: ["./tests/jest.afterEnv.js"],
   modulePathIgnorePatterns: ["<rootDir>/deploy/"],
   maxWorkers: 1,
   verbose: true,
