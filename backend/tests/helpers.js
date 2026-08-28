@@ -47,3 +47,10 @@ export const createUserWithLists = async ({
 
   return { user, password, lists: createdLists };
 };
+
+export const loginAs = async (username, password = "password123") => {
+  const res = await request(app).post("/todo/login").send({ username, password });
+  return res.body;
+};
+
+export const bearer = (token) => ({ Authorization: `Bearer ${token}` });

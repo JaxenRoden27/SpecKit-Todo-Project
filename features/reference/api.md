@@ -1,7 +1,7 @@
 # API Reference
 
 **Base path:** `/todo/`  
-**Status:** Integrated API through **Feature 1** (authentication; scoped `GET /todo/lists` for session proof).  
+**Status:** Integrated API through **Feature 2** (authentication, list CRUD).  
 **Authority for new work:** feature specs in `features/` — update this file in the same PR when routes or payloads change.
 
 **Auth:** Send `Authorization: Bearer <token>` on protected routes.  
@@ -12,8 +12,7 @@
 | Area | Feature |
 |------|---------|
 | Register, login, logout | 1 |
-| `GET /todo/lists` (owner-scoped; used to prove session + isolation) | 1 |
-| List CRUD (`POST/PUT/DELETE`) | Feature 2 (not shipped) |
+| List CRUD (`GET/POST/PUT/DELETE /todo/lists`) | 2 |
 
 ---
 
@@ -70,12 +69,33 @@ Password hashes are never returned.
 
 ---
 
-## Lists (Feature 1 foundation)
+## Lists (Feature 2)
 
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
-| `GET` | `/todo/lists` | Yes | Lists owned by the authenticated user only |
+| `GET` | `/todo/lists` | Yes | Lists owned by the caller (array, ordered by `name` ASC) |
+| `POST` | `/todo/lists` | Yes | Create a new list |
+| `PUT` | `/todo/lists/:listId` | Yes | Rename a list |
+| `DELETE` | `/todo/lists/:listId` | Yes | Delete a list owned by the caller |
 
-Returns a JSON array of list rows (`id`, `name`, `userId`, timestamps). Empty array when the user has no lists. Other users' lists are never included.
+**Create / rename body:**
+```json
+{ "name": "Groceries" }
+```
 
-List create/rename/delete is Feature 2.
+Client-supplied `userId` on create is ignored; ownership is always `req.user.id`.
+
+**List success** (`200` / `201`):
+```json
+{
+  "id": 1,
+  "name": "Groceries",
+  "userId": 42,
+  "createdAt": "2026-07-02T12:00:00.000Z",
+  "updatedAt": "2026-07-02T12:00:00.000Z"
+}
+```
+
+**Delete success:** `200` with `{ "message": "List deleted." }`.
+
+**List errors:** empty/whitespace name `400` with `"List name is required."`; name longer than 100 characters `400` with `"List name must be 100 characters or fewer."`; unowned or missing list `404` with `"List with id=<id> not found."`; missing token `401`.

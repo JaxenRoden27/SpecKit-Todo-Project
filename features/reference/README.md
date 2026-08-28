@@ -30,4 +30,4 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | Area | Introduced |
 |------|------------|
 | Auth (`users`, `sessions`, register/login/logout) | Feature 1 |
-| Owner-scoped `GET /todo/lists` | Feature 1 |
+| List CRUD (`GET/POST/PUT/DELETE /todo/lists`) | Feature 2 |

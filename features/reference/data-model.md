@@ -1,6 +1,6 @@
 # Data Model Reference
 
-**Status:** Integrated schema through **Feature 1** (`users`, `sessions`, `lists`).  
+**Status:** Integrated schema through **Feature 2** (`users`, `sessions`, `lists`).  
 **Authority for new work:** feature specs in `features/` — update this file in the same PR when schema changes.  
 **Architecture:** [ADR-0003 — MySQL relational database](../../docs/adr/0003-mysql-relational-database.md)
 
@@ -9,7 +9,7 @@
 | Table / column | Introduced |
 |----------------|------------|
 | `users`, `sessions` | Feature 1 |
-| `lists` (read via `GET /todo/lists`; CRUD in Feature 2) | Feature 1 |
+| `lists` | Feature 1 (table); Feature 2 (CRUD) |
 
 ---
 
@@ -50,12 +50,12 @@
 | Column | Type | Rules |
 |--------|------|-------|
 | `id` | INTEGER PK | Auto-increment |
-| `name` | STRING(100) | Required |
-| `userId` | INTEGER FK | Required → `users.id` |
+| `name` | STRING(100) | Required; trimmed; max 100 characters |
+| `userId` | INTEGER FK | Required → `users.id`; set from `req.user.id` on create (never from client body) |
 | `createdAt` | DATE | Sequelize timestamps |
 | `updatedAt` | DATE | Sequelize timestamps |
 
-Feature 1 only **reads** lists (`GET /todo/lists` scoped to `req.user.id`). Create/update/delete is Feature 2.
+Feature 2 delivers list create, rename, and delete. Reads remain scoped to `userId = req.user.id`.
 
 ---
 

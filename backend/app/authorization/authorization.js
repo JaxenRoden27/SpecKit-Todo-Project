@@ -1,7 +1,7 @@
 import db from "../models/index.js";
 import logger from "../config/logger.js";
 
-const { session: Session, user: User } = db;
+const { session: Session, user: User, list: List } = db;
 
 export const authenticate = async (req, res, next) => {
   try {
@@ -27,4 +27,9 @@ export const authenticate = async (req, res, next) => {
     logger.error(`authenticate failed: ${err.message}`);
     return res.status(401).send({ message: "Unauthorized! Invalid or expired token." });
   }
+};
+
+export const getAccessibleListOrNull = async (req, listId) => {
+  const row = await List.findOne({ where: { id: listId, userId: req.user.id } });
+  return row ?? null;
 };

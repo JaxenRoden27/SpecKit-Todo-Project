@@ -42,14 +42,27 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 |------|-------------|------------|
 | Every authenticated request resolves to `req.user.id` from the session | `authenticate` | Feature 1 |
 | `GET /todo/lists` returns only rows where `userId = req.user.id` | `list.controller` `findAll` | Feature 1 |
+| List create ownership comes from `req.user.id` only; client `userId` is ignored | `list.controller` `create` | Feature 2 |
+| List update/delete only when `id` and `userId = req.user.id`; otherwise `404` | `getAccessibleListOrNull` | Feature 2 |
+| Cross-user access → **`404`**, never `403` | List write helpers | ADR-0002; Feature 2 |
+
+## Lists
+
+| Rule | Enforcement | Introduced |
+|------|-------------|------------|
+| List name trimmed; empty/whitespace rejected | Create/update API + Dashboard dialogs | Feature 2 |
+| List name max **100** characters | API (`400`) | Feature 2 |
+| Lists returned **alphabetically by name** | `findAll` `order: name ASC` | Feature 2 |
+| Single-view lists UI (`Dashboard.vue`); list CRUD via dialogs; no sidebar/main split | Dashboard | Feature 2 |
+| Empty lists: **"No lists yet. Create your first list."** | Dashboard | Feature 2 |
 
 ## UI
 
 | Rule | Enforcement | Introduced |
 |------|-------------|------------|
-| Login, register, and home placeholder use a full-screen layout (no `MenuBar`) | `App.vue` | Feature 1 |
-| Home shows a welcome using the user's first name and a **Sign out** button | `Home.vue` | Feature 1 |
-| Auth errors shown in `<v-alert type="error">` | Login / Register | Feature 1 |
+| Login and register use a full-screen layout (no `MenuBar`) | `App.vue` | Feature 1 |
+| `MenuBar` shown on signed-in routes with the user's name and **Sign out** | `MenuBar.vue` | Feature 2 |
+| Auth and list errors shown in `<v-alert type="error">` | Login / Register / Dashboard | Features 1–2 |
 
 ## Errors (product convention)
 
