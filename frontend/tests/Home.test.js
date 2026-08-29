@@ -17,6 +17,13 @@ vi.mock("../src/services/authServices.js", () => ({
   },
 }));
 
+vi.mock("../src/services/userServices.js", () => ({
+  default: {
+    getUser: vi.fn(),
+    updateUser: vi.fn(),
+  },
+}));
+
 describe("Feature 1 — User Authentication & Session Management", () => {
   beforeEach(() => {
     localStorage.clear();
@@ -28,23 +35,32 @@ describe("Feature 1 — User Authentication & Session Management", () => {
       Utils.setStore("user", { fName: "Jane", lName: "Doe", token: "jwt-token" });
       AuthServices.logoutUser.mockResolvedValue({ data: { message: "Signed out successfully." } });
 
+      const host = document.createElement("div");
+      document.body.appendChild(host);
       const { wrapper, router } = await mountWithPlugins(
         {
           components: { MenuBar },
           template: "<v-app><MenuBar /></v-app>",
         },
         {
+          attachTo: host,
           router: await createTestRouter("/"),
         }
       );
 
-      expect(wrapper.text()).toContain("Jane");
-      await wrapper.get("button").trigger("click");
+      await wrapper.find('[aria-label="Open profile"]').trigger("click");
       await flushPromises();
+      expect(wrapper.text()).toContain("Jane");
+      const logOut = wrapper.findAll("button").find((btn) => btn.text().trim() === "Log out");
+      await logOut.trigger("click");
+      await flushPromises();
+      await vi.waitFor(() => {
+        expect(router.currentRoute.value.name).toBe("login");
+      });
 
       expect(AuthServices.logoutUser).toHaveBeenCalled();
       expect(localStorage.getItem("user")).toBeNull();
-      expect(router.currentRoute.value.name).toBe("login");
+      wrapper.unmount();
     });
   });
 });

@@ -1,7 +1,7 @@
 # API Reference
 
 **Base path:** `/todo/`  
-**Status:** Integrated API through **Feature 3** (authentication, list CRUD, todo items).  
+**Status:** Integrated API through **Feature 4** (authentication, list CRUD, todo items, user profile).  
 **Authority for new work:** feature specs in `features/` — update this file in the same PR when routes or payloads change.
 
 **Auth:** Send `Authorization: Bearer <token>` on protected routes.  
@@ -14,6 +14,7 @@
 | Register, login, logout | 1 |
 | List CRUD (`GET/POST/PUT/DELETE /todo/lists`) | 2 |
 | Todo items (`GET/POST /todo/lists/:listId/todos`, `PUT/DELETE /todo/todos/:id`) | 3 |
+| Profile (`GET/PUT /todo/users/:id`) | 4 |
 
 ---
 
@@ -135,3 +136,45 @@ Client-supplied `userId` / `listId` on create are ignored. New todos default `co
 **Delete success:** `200` with `{ "message": "Todo deleted." }`.
 
 **Todo errors:** empty/whitespace title `400` with `"Todo title is required."`; title longer than 255 characters `400`; unowned/missing parent list `404` with `"List with id=<id> not found."`; unowned/missing todo `404` with `"Todo with id=<id> not found."`; missing token `401`.
+
+---
+
+## Profile (Feature 4)
+
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| `GET` | `/todo/users/:id` | Yes | Fetch the authenticated user's profile |
+| `PUT` | `/todo/users/:id` | Yes | Update the authenticated user's profile |
+
+Self-access only: `:id` must equal `req.user.id`. Cross-user access returns `404` (never `403`) and does not confirm whether the other user exists.
+
+**Update body:**
+```json
+{
+  "fName": "Jane",
+  "lName": "Doe",
+  "email": "jane@example.com",
+  "username": "jdoe",
+  "password": "newpassword123"
+}
+```
+
+`fName`, `lName`, `email`, and `username` are required. `password` is optional — omit it (or send empty) to leave the current password unchanged. When provided, password must be at least 8 characters and is bcrypt-hashed before save. Username is stored `trim().toLowerCase()`. Role is not writable.
+
+**Profile success** (`200`):
+```json
+{
+  "id": 42,
+  "fName": "Jane",
+  "lName": "Doe",
+  "email": "jane@example.com",
+  "username": "jdoe",
+  "role": "worker",
+  "createdAt": "2026-07-02T12:00:00.000Z",
+  "updatedAt": "2026-07-02T12:05:00.000Z"
+}
+```
+
+Password hashes are never returned. Login session payloads still use `userId`; profile payloads use `id`.
+
+**Profile errors:** missing required field `400` (e.g. `"First name is required."`); password < 8 chars `400` with `"Password must be at least 8 characters."`; invalid email `400` with `"Enter a valid email address."`; duplicate username `400` with `"Username is already taken."`; duplicate email `400` with `"Email is already registered."`; other user's id or missing self `404` with `"User with id=<id> not found."`; missing token `401`.

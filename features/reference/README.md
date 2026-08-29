@@ -32,3 +32,4 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | Auth (`users`, `sessions`, register/login/logout) | Feature 1 |
 | List CRUD (`GET/POST/PUT/DELETE /todo/lists`) | Feature 2 |
 | Todo items (`GET/POST /todo/lists/:listId/todos`, `PUT/DELETE /todo/todos/:id`) | Feature 3 |
+| Profile (`GET/PUT /todo/users/:id`; MenuBar icon + Log out) | Feature 4 |

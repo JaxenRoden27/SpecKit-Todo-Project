@@ -34,7 +34,7 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | Signed-in user visiting login → redirect to home | Router `beforeEach` | Feature 1 |
 | Default role for new users is `worker` | Register | Feature 1 |
 | Username normalized `trim().toLowerCase()` on save | User model `beforeValidate` | Feature 1 |
-| Shared `emailRules` for registration | `frontend/src/config/validation.js` | Feature 1 |
+| Shared `emailRules` for registration and Edit Profile | `frontend/src/config/validation.js` | Features 1, 4 |
 
 ## Ownership & isolation
 
@@ -45,7 +45,8 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | List create ownership comes from `req.user.id` only; client `userId` is ignored | `list.controller` `create` | Feature 2 |
 | List update/delete only when `id` and `userId = req.user.id`; otherwise `404` | `getAccessibleListOrNull` | Feature 2 |
 | Todos: parent list must be owned; todo reads/writes scoped to caller; create ignores client `userId`/`listId` spoofing | `todo.controller` + helpers | Feature 3 |
-| Cross-user access → **`404`**, never `403` | List/todo helpers | ADR-0002; Features 2–3 |
+| Cross-user access → **`404`**, never `403` | List/todo/profile helpers | ADR-0002; Features 2–4 |
+| Profile read/write only when `:id = req.user.id`; otherwise `404` without confirming the other user exists | `getAccessibleUserOrNull` | Feature 4 |
 | Deleting a list cascades to its todos | Sequelize `List hasMany Todo` `onDelete: CASCADE` | Feature 3 |
 
 ## Lists
@@ -75,13 +76,23 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | Rule | Enforcement | Introduced |
 |------|-------------|------------|
 | Login and register use a full-screen layout (no `MenuBar`) | `App.vue` | Feature 1 |
-| `MenuBar` shown on signed-in routes with the user's name and **Sign out** | `MenuBar.vue` | Feature 2 |
-| Auth, list, and todo errors shown in `<v-alert type="error">` | Login / Register / Dashboard | Features 1–3 |
+| `MenuBar` shown on signed-in routes with a user icon (`mdi-account-circle`); profile dropdown shows full name, username, and email | `MenuBar.vue` | Features 2→4 |
+| Logout lives only in the profile dropdown as **Log out** (no standalone **Sign out** on the app bar) | `MenuBar.vue` | Feature 4 |
+| After a successful profile save, refresh `localStorage` key `user` and dispatch `user-logged-in` | `MenuBar.vue` | Feature 4 |
+| Auth, list, todo, and profile errors shown in `<v-alert type="error">` | Login / Register / Dashboard / MenuBar | Features 1–4 |
 
 ## Errors (product convention)
 
 | Rule | Enforcement | Introduced |
 |------|-------------|------------|
 | Error body shape `{ "message": "Human-readable explanation." }` | Controllers | Feature 1 |
-| Duplicate username → `"Username is already taken."`; duplicate email → `"Email is already registered."` | Register | Feature 1 |
+| Duplicate username → `"Username is already taken."`; duplicate email → `"Email is already registered."` | Register and profile update | Features 1, 4 |
 | Invalid credentials → `"Invalid username or password."` (same message for unknown user or wrong password) | Login | Feature 1 |
+
+## Profile
+
+| Rule | Enforcement | Introduced |
+|------|-------------|------------|
+| Signed-in users may read/update only their own profile | `GET/PUT /todo/users/:id` + `getAccessibleUserOrNull` | Feature 4 |
+| Profile password is optional on update; when provided, min 8 characters and bcrypt-hashed | `user.controller` `update` | Feature 4 |
+| Profile fields trimmed; username `trim().toLowerCase()` | User model `beforeValidate` + update controller | Features 1, 4 |

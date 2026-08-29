@@ -1,6 +1,6 @@
 # Data Model Reference
 
-**Status:** Integrated schema through **Feature 3** (`users`, `sessions`, `lists`, `todos`).  
+**Status:** Integrated schema through **Feature 4** (`users`, `sessions`, `lists`, `todos`).  
 **Authority for new work:** feature specs in `features/` — update this file in the same PR when schema changes.  
 **Architecture:** [ADR-0003 — MySQL relational database](../../docs/adr/0003-mysql-relational-database.md)
 
@@ -11,6 +11,7 @@
 | `users`, `sessions` | Feature 1 |
 | `lists` | Feature 1 (table); Feature 2 (CRUD) |
 | `todos` | Feature 3 |
+| Profile GET/PUT on existing `users` (no new table) | Feature 4 |
 
 ---
 
@@ -24,11 +25,13 @@
 | `email` | STRING | Required, unique |
 | `username` | STRING(100) | Required, unique; trimmed and stored lowercase (`beforeValidate` hook) |
 | `password` | STRING(255) | Required; bcrypt hash only (never returned by API) |
-| `role` | STRING(20) | Default `worker` |
+| `role` | STRING(20) | Default `worker`; read-only on profile update (Feature 4) |
 | `createdAt` | DATE | Sequelize timestamps |
 | `updatedAt` | DATE | Sequelize timestamps |
 
-**Sequelize:** `defaultScope` excludes `password` from query results. Use `unscoped()` when comparing passwords at login.
+**Sequelize:** `defaultScope` excludes `password` from query results. Use `unscoped()` when comparing passwords at login or hashing a new password on profile update.
+
+Feature 4 edits `fName`, `lName`, `email`, and `username` via `PUT /todo/users/:id`. Password is optional on that update; when provided it is bcrypt-hashed. No new columns.
 
 ---
 
