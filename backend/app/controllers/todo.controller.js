@@ -23,6 +23,36 @@ const validateTitle = (raw) => {
   return { title };
 };
 
+const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const INVALID_DUE_DATE = "Due date must be a valid date in YYYY-MM-DD format.";
+
+const isValidDateOnly = (value) => {
+  if (!DATE_ONLY_REGEX.test(value)) {
+    return false;
+  }
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return (
+    parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month - 1 &&
+    parsed.getUTCDate() === day
+  );
+};
+
+const parseDueDate = (raw) => {
+  if (raw === undefined) {
+    return { omitted: true };
+  }
+  if (raw === null || raw === "") {
+    return { dueDate: null };
+  }
+  const value = String(raw).trim();
+  if (!isValidDateOnly(value)) {
+    return { error: INVALID_DUE_DATE };
+  }
+  return { dueDate: value };
+};
+
 const notFoundList = (listId) => ({ message: `List with id=${listId} not found.` });
 const notFoundTodo = (todoId) => ({ message: `Todo with id=${todoId} not found.` });
 
@@ -71,9 +101,15 @@ exports.create = async (req, res) => {
       return res.status(400).send({ message: error });
     }
 
+    const due = parseDueDate(req.body?.dueDate);
+    if (due.error) {
+      return res.status(400).send({ message: due.error });
+    }
+
     const todo = await db.todo.create({
       title,
       completed: false,
+      dueDate: due.omitted ? null : due.dueDate,
       listId: list.id,
       userId: req.user.id,
     });
@@ -106,6 +142,13 @@ exports.update = async (req, res) => {
     }
     if (req.body?.completed !== undefined) {
       updates.completed = Boolean(req.body.completed);
+    }
+    if (req.body?.dueDate !== undefined) {
+      const due = parseDueDate(req.body.dueDate);
+      if (due.error) {
+        return res.status(400).send({ message: due.error });
+      }
+      updates.dueDate = due.dueDate;
     }
 
     await todo.update(updates);

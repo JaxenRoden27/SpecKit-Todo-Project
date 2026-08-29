@@ -1,7 +1,7 @@
 # API Reference
 
 **Base path:** `/todo/`  
-**Status:** Integrated API through **Feature 4** (authentication, list CRUD, todo items, user profile).  
+**Status:** Integrated API through **Feature 5** (authentication, list CRUD, todos with optional due dates, user profile).  
 **Authority for new work:** feature specs in `features/` — update this file in the same PR when routes or payloads change.
 
 **Auth:** Send `Authorization: Bearer <token>` on protected routes.  
@@ -15,6 +15,7 @@
 | List CRUD (`GET/POST/PUT/DELETE /todo/lists`) | 2 |
 | Todo items (`GET/POST /todo/lists/:listId/todos`, `PUT/DELETE /todo/todos/:id`) | 3 |
 | Profile (`GET/PUT /todo/users/:id`) | 4 |
+| Todo `dueDate` on create/update | 5 |
 
 ---
 
@@ -110,12 +111,31 @@ Client-supplied `userId` on create is ignored; ownership is always `req.user.id`
 |--------|------|------|---------|
 | `GET` | `/todo/lists/:listId/todos` | Yes | Todos in an owned list (incomplete first, then `createdAt` ASC) |
 | `POST` | `/todo/lists/:listId/todos` | Yes | Add a todo to an owned list |
-| `PUT` | `/todo/todos/:id` | Yes | Update title and/or `completed` |
+| `PUT` | `/todo/todos/:id` | Yes | Update title, `completed`, and/or `dueDate` |
 | `DELETE` | `/todo/todos/:id` | Yes | Delete a todo owned by the caller |
 
 **Create body:**
 ```json
-{ "title": "Buy milk" }
+{
+  "title": "Buy milk",
+  "dueDate": "2026-07-15"
+}
+```
+
+`dueDate` is optional. Omit it or send `null` for no due date.
+
+**Update body** (any combination; omit a field to leave it unchanged except `dueDate: null` clears the date):
+```json
+{
+  "title": "Buy oat milk",
+  "completed": false,
+  "dueDate": "2026-07-20"
+}
+```
+
+Clear due date:
+```json
+{ "dueDate": null }
 ```
 
 Client-supplied `userId` / `listId` on create are ignored. New todos default `completed: false`. Parent list must be owned by the caller.
@@ -127,15 +147,18 @@ Client-supplied `userId` / `listId` on create are ignored. New todos default `co
   "listId": 1,
   "title": "Buy milk",
   "completed": false,
+  "dueDate": "2026-07-15",
   "userId": 42,
   "createdAt": "2026-07-02T12:05:00.000Z",
   "updatedAt": "2026-07-02T12:05:00.000Z"
 }
 ```
 
+`dueDate` is `null` when not set. Dates are calendar-only `YYYY-MM-DD`.
+
 **Delete success:** `200` with `{ "message": "Todo deleted." }`.
 
-**Todo errors:** empty/whitespace title `400` with `"Todo title is required."`; title longer than 255 characters `400`; unowned/missing parent list `404` with `"List with id=<id> not found."`; unowned/missing todo `404` with `"Todo with id=<id> not found."`; missing token `401`.
+**Todo errors:** empty/whitespace title `400` with `"Todo title is required."`; title longer than 255 characters `400` with `"Todo title must be 255 characters or fewer."`; invalid `dueDate` `400` with `"Due date must be a valid date in YYYY-MM-DD format."`; unowned/missing parent list `404` with `"List with id=<id> not found."`; unowned/missing todo `404` with `"Todo with id=<id> not found."`; missing token `401`.
 
 ---
 

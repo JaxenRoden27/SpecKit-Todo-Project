@@ -48,10 +48,11 @@ export const createUserWithLists = async ({
   return { user, password, lists: createdLists };
 };
 
-export const createTodo = async ({ user, list, title, completed = false }) => {
+export const createTodo = async ({ user, list, title, completed = false, dueDate = null }) => {
   return db.todo.create({
     title,
     completed,
+    dueDate,
     listId: list.id,
     userId: user.id,
   });

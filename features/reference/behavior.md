@@ -70,6 +70,9 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | Items managed in list-items dialog (+ nested add/edit/delete); **+ Add Item** only inside that dialog | Dashboard | Feature 3 |
 | Empty items: **"No todos in this list yet."** | Items dialog | Feature 3 |
 | Completed todos show struck-through / muted title | Dashboard row styling | Feature 3 |
+| `dueDate` optional on create/update; `null` means none; `PUT` omit leaves it unchanged; `PUT` `null` clears it | `todo.controller` | Feature 5 |
+| Invalid `dueDate` → `400` `"Due date must be a valid date in YYYY-MM-DD format."` | Create/update API | Feature 5 |
+| Incomplete todos with `dueDate` before today (local calendar) use overdue (`text-error`) styling; completed do not | Dashboard + `isTodoOverdue` | Feature 5 |
 
 ## UI
 
